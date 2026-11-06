@@ -84,7 +84,7 @@ legend { font-family: var(--font-data); font-size: 11.5px; letter-spacing: .08em
 .headline { display: grid; gap: 6px; }
 .headline .k { font-size: 13px; color: var(--muted); }
 .risk { font-family: var(--font-data); font-weight: 500; font-size: 52px; line-height: 1; font-variant-numeric: tabular-nums; }
-.verdict { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; padding: 6px 12px; border-radius: 999px; width: fit-content; }
+.verdict { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; padding: 8px 14px; border-radius: 14px; width: fit-content; }
 .verdict.refer { background: var(--warn-soft); color: var(--warn); }
 .verdict.high { background: var(--accent-soft); color: var(--accent); }
 .verdict.low { background: var(--ok-soft); color: var(--ok); }
@@ -352,7 +352,7 @@ h2 { font-family: var(--font-display); font-weight: 600; font-size: 18px; margin
     $("verdict").className = "verdict " + TIERCLS[k];
     $("verdict-text").textContent = [ "",
       "Low risk: significant fibrosis unlikely",
-      "Intermediate risk: elastography if capacity allows, otherwise repeat in 1–2 years",
+      "Intermediate risk: 1–2 years follow-up; manage metabolic risk factors such as weight, diabetes control and lipids",
       "High risk: elastography recommended" ][k];
     $("fill").style.width = Math.min(100, p80 / 0.5 * 100).toFixed(1) + "%";
     $("thr").style.left = (MODELS.p80.thr / 0.5 * 100).toFixed(2) + "%";
