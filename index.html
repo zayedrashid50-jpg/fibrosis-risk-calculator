@@ -133,13 +133,13 @@ h2 { font-family: var(--font-display); font-weight: 600; font-size: 18px; margin
         <div class="fields">
           <div class="field">
             <label for="age">Age</label>
-            <div class="inputrow"><input id="age" type="number" inputmode="decimal" min="18" max="90" step="1" value="55"><span class="unit">years</span></div>
+            <div class="inputrow"><input id="age" type="number" inputmode="decimal" min="18" max="90" step="1"><span class="unit">years</span></div>
             <div class="err" id="err-age"></div>
           </div>
           <div class="field">
             <label id="sex-label">Sex</label>
             <div class="seg" role="group" aria-labelledby="sex-label">
-              <button type="button" id="sex-m" aria-pressed="true">Male</button>
+              <button type="button" id="sex-m" aria-pressed="false">Male</button>
               <button type="button" id="sex-f" aria-pressed="false">Female</button>
             </div>
           </div>
@@ -147,7 +147,7 @@ h2 { font-family: var(--font-display); font-weight: 600; font-size: 18px; margin
             <label id="dm-label">Diabetes</label>
             <div class="seg" role="group" aria-labelledby="dm-label">
               <button type="button" id="dm-n" aria-pressed="false">No</button>
-              <button type="button" id="dm-y" aria-pressed="true">Yes</button>
+              <button type="button" id="dm-y" aria-pressed="false">Yes</button>
             </div>
           </div>
         </div>
@@ -158,12 +158,12 @@ h2 { font-family: var(--font-display); font-weight: 600; font-size: 18px; margin
         <div class="fields">
           <div class="field">
             <label for="wc">Waist circumference</label>
-            <div class="inputrow"><input id="wc" type="number" inputmode="decimal" min="50" max="180" step="0.1" value="105"><span class="unit">cm</span></div>
+            <div class="inputrow"><input id="wc" type="number" inputmode="decimal" min="50" max="180" step="0.1"><span class="unit">cm</span></div>
             <div class="err" id="err-wc"></div>
           </div>
           <div class="field">
             <label for="bmi">BMI</label>
-            <div class="inputrow"><input id="bmi" type="number" inputmode="decimal" min="14" max="70" step="0.1" value="32"><span class="unit">kg/m²</span></div>
+            <div class="inputrow"><input id="bmi" type="number" inputmode="decimal" min="14" max="70" step="0.1"><span class="unit">kg/m²</span></div>
             <div class="err" id="err-bmi"></div>
           </div>
         </div>
@@ -174,23 +174,23 @@ h2 { font-family: var(--font-display); font-weight: 600; font-size: 18px; margin
         <div class="fields">
           <div class="field">
             <label for="ast">AST</label>
-            <div class="inputrow"><input id="ast" type="number" inputmode="decimal" min="3" max="1000" step="1" value="40"><span class="unit">U/L</span></div>
+            <div class="inputrow"><input id="ast" type="number" inputmode="decimal" min="3" max="1000" step="1"><span class="unit">U/L</span></div>
             <div class="err" id="err-ast"></div>
           </div>
           <div class="field">
             <label for="alt">ALT</label>
-            <div class="inputrow"><input id="alt" type="number" inputmode="decimal" min="3" max="1000" step="1" value="45"><span class="unit">U/L</span></div>
+            <div class="inputrow"><input id="alt" type="number" inputmode="decimal" min="3" max="1000" step="1"><span class="unit">U/L</span></div>
             <div class="err" id="err-alt"></div>
           </div>
           <div class="field">
             <label for="ggt">GGT</label>
-            <div class="inputrow"><input id="ggt" type="number" inputmode="decimal" min="3" max="2000" step="1" value="60"><span class="unit">U/L</span></div>
+            <div class="inputrow"><input id="ggt" type="number" inputmode="decimal" min="3" max="2000" step="1"><span class="unit">U/L</span></div>
             <div class="err" id="err-ggt"></div>
           </div>
           <div class="field">
             <label for="alb">Albumin</label>
             <div class="inputrow">
-              <input id="alb" type="number" inputmode="decimal" min="1.5" max="6" step="0.1" value="4.3">
+              <input id="alb" type="number" inputmode="decimal" min="1.5" max="6" step="0.1">
               <select id="albunit" class="unit" aria-label="Albumin unit">
                 <option value="gdl" selected>g/dL</option>
                 <option value="gl">g/L</option>
@@ -206,7 +206,7 @@ h2 { font-family: var(--font-display); font-weight: 600; font-size: 18px; margin
         <div class="fields">
           <div class="field">
             <label for="plt">Platelets</label>
-            <div class="inputrow"><input id="plt" type="number" inputmode="decimal" min="10" max="1000" step="1" value="200"><span class="unit">×10³/µL</span></div>
+            <div class="inputrow"><input id="plt" type="number" inputmode="decimal" min="10" max="1000" step="1"><span class="unit">×10³/µL</span></div>
             <div class="err" id="err-plt"></div>
           </div>
         </div>
@@ -215,8 +215,9 @@ h2 { font-family: var(--font-display); font-weight: 600; font-size: 18px; margin
       <div class="actions">
         <button type="button" class="btn" id="ex-high">Example: higher-risk patient</button>
         <button type="button" class="btn" id="ex-low">Example: lower-risk patient</button>
+        <button type="button" class="btn" id="clear">Clear</button>
       </div>
-      <p class="note">The form opens with an example patient. Replace the values with your own patient's.</p>
+      <p class="note">Enter your patient's values; the result appears once all fields are complete. The example buttons fill in sample patients.</p>
     </form>
 
     <section class="panel report" aria-live="polite">
@@ -279,7 +280,8 @@ h2 { font-family: var(--font-display); font-weight: 600; font-size: 18px; margin
     ggt: [3, 2000, "Enter GGT between 3 and 2000 U/L."],
     plt: [10, 1000, "Enter platelets between 10 and 1000 ×10³/µL."]
   };
-  var state = { female: 0, dm: 1 };
+  var state = { female: null, dm: null };
+  var hasErr = false;
   var $ = function (id) { return document.getElementById(id); };
 
   function seg(onId, offId, key, val) {
@@ -295,17 +297,21 @@ h2 { font-family: var(--font-display); font-weight: 600; font-size: 18px; margin
 
   function read() {
     var x = { female: state.female, dm: state.dm }, ok = true;
+    hasErr = false;
+    if (state.female === null || state.dm === null) ok = false;
     Object.keys(LIMITS).forEach(function (k) {
+      if ($(k).value.trim() === "") { $("err-" + k).textContent = ""; ok = false; return; }
       var v = parseFloat($(k).value), L = LIMITS[k];
       var bad = !isFinite(v) || v < L[0] || v > L[1];
       $("err-" + k).textContent = bad ? L[2] : "";
-      if (bad) ok = false; else x[k] = v;
+      if (bad) { ok = false; hasErr = true; } else x[k] = v;
     });
+    if ($("alb").value.trim() === "") { $("err-alb").textContent = ""; return null; }
     var a = parseFloat($("alb").value), gl = $("albunit").value === "gl";
     var g = gl ? a / 10 : a;
     var badA = !isFinite(g) || g < 1.5 || g > 6;
     $("err-alb").textContent = badA ? (gl ? "Enter albumin between 15 and 60 g/L." : "Enter albumin between 1.5 and 6 g/dL.") : "";
-    if (badA) ok = false; else x.alb = g;
+    if (badA) { ok = false; hasErr = true; } else x.alb = g;
     return ok ? x : null;
   }
   function terms(x) {
@@ -344,8 +350,17 @@ h2 { font-family: var(--font-display); font-weight: 600; font-size: 18px; margin
 
   function update() {
     var x = read();
-    if (!x) { ["risk80", "p80", "p97", "p136", "fib4"].forEach(function (k) { $(k).textContent = "–"; });
-      $("verdict-text").textContent = "Check the highlighted values"; $("verdict").className = "verdict"; return; }
+    if (!x) {
+      ["risk80", "p80", "p97", "p136", "fib4"].forEach(function (k) { $(k).textContent = "–"; });
+      ["t80", "t97", "t136", "tfib4"].forEach(function (k) { $(k).textContent = ""; $(k).className = "tag"; });
+      $("verdict-text").textContent = hasErr ? "Check the highlighted values" : "Enter all values to see the result";
+      $("verdict").className = "verdict";
+      $("fill").style.width = "0%";
+      $("thr").style.left = (MODELS.p80.thr / 0.5 * 100).toFixed(2) + "%";
+      $("thr2").style.left = (MODELS.p80.hi / 0.5 * 100).toFixed(2) + "%";
+      $("drivers").innerHTML = '<p class="note">Shown once all values are entered.</p>';
+      return;
+    }
     var p80 = prob(MODELS.p80, x), p97 = prob(MODELS.p97, x), p136 = prob(MODELS.p136, x);
     $("risk80").textContent = pct(p80);
     var k = tier(MODELS.p80, p80);
@@ -381,6 +396,13 @@ h2 { font-family: var(--font-display); font-weight: 600; font-size: 18px; margin
   });
   $("ex-low").addEventListener("click", function () {
     setVals({ female: 1, dm: 0, vals: { age: 40, wc: 82, bmi: 24, ast: 20, alt: 18, ggt: 18, plt: 280, alb: 4.5 } });
+  });
+  $("clear").addEventListener("click", function () {
+    ["age", "wc", "bmi", "ast", "alt", "ggt", "plt", "alb"].forEach(function (k) { $(k).value = ""; });
+    $("albunit").value = "gdl";
+    state.female = null; state.dm = null;
+    ["sex-m", "sex-f", "dm-n", "dm-y"].forEach(function (k) { $(k).setAttribute("aria-pressed", "false"); });
+    update();
   });
   $("albunit").addEventListener("change", function () {
     var a = parseFloat($("alb").value);
