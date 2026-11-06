@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Research calculator estimating the probability of liver fibrosis (FibroScan liver stiffness) from routine clinical and laboratory measurements. For research and education only.">
+<meta name="robots" content="noindex">
+<title>Fibrosis Risk Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<style>
+/* Layout: lab requisition slip on the left (inputs grouped as a clinician orders them),
+   report card on the right that recomputes live; stacks to one column on phones. */
+:root {
+  --bg: #f3f5f7;
+  --paper: #ffffff;
+  --ink: #17212b;
+  --muted: #5b6875;
+  --rule: #d6dde4;
+  --accent: #7a2430;          /* hepatic oxblood */
+  --accent-soft: #f4e6e8;
+  --ok: #1f6b4f;
+  --ok-soft: #e3f1ea;
+  --warn: #9a3b12;
+  --warn-soft: #fbe9df;
+  --bar: #e7ebef;
+  --font-display: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11161b; --paper: #182028; --ink: #e6ebf0; --muted: #9aa7b3; --rule: #2c3741;
+    --accent: #e08a95; --accent-soft: #3a2228; --ok: #6fcfa6; --ok-soft: #173327;
+    --warn: #f0a37a; --warn-soft: #3b2418; --bar: #26313b; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11161b; --paper: #182028; --ink: #e6ebf0; --muted: #9aa7b3; --rule: #2c3741;
+  --accent: #e08a95; --accent-soft: #3a2228; --ok: #6fcfa6; --ok-soft: #173327;
+  --warn: #f0a37a; --warn-soft: #3b2418; --bar: #26313b; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body);
+  font-size: 15px; line-height: 1.5;
+}
+.wrap {
+  max-width: 1100px; margin: 0 auto;
+  padding-block: 28px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 22px;
+}
+header { display: grid; gap: 6px; }
+.eyebrow { font-family: var(--font-data); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(26px, 4vw, 36px); line-height: 1.15; margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 68ch; margin: 0; }
+.grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: 22px; align-items: start; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--paper); border: 1px solid var(--rule); border-radius: 10px; padding: 20px; display: grid; gap: 18px; min-width: 0; }
+fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 12px; }
+legend { font-family: var(--font-data); font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 0 0 4px; border-bottom: 1px solid var(--rule); width: 100%; }
+.fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px 14px; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field label { font-size: 13px; font-weight: 500; }
+.inputrow { display: flex; align-items: stretch; border: 1px solid var(--rule); border-radius: 7px; background: var(--paper); overflow: hidden; }
+.inputrow:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+.inputrow input, .inputrow select { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); font-family: var(--font-data); font-size: 15px; padding: 8px 10px; font-variant-numeric: tabular-nums; }
+.inputrow input:focus, .inputrow select:focus { outline: none; }
+.unit { font-family: var(--font-data); font-size: 12px; color: var(--muted); padding: 0 10px; display: flex; align-items: center; border-left: 1px solid var(--rule); white-space: nowrap; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 7px; overflow: hidden; }
+.seg button { font: inherit; font-size: 13.5px; border: 0; background: transparent; color: var(--ink); padding: 8px 14px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.err { color: var(--warn); font-size: 12.5px; min-height: 1em; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn { font: inherit; font-size: 13.5px; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); border-radius: 7px; padding: 7px 12px; cursor: pointer; }
+.btn:hover { border-color: var(--muted); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.report { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 14px); }
+@media (max-width: 860px) { .report { position: static; } }
+.headline { display: grid; gap: 6px; }
+.headline .k { font-size: 13px; color: var(--muted); }
+.risk { font-family: var(--font-data); font-weight: 500; font-size: 52px; line-height: 1; font-variant-numeric: tabular-nums; }
+.verdict { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; padding: 6px 12px; border-radius: 999px; width: fit-content; }
+.verdict.refer { background: var(--warn-soft); color: var(--warn); }
+.verdict.high { background: var(--accent-soft); color: var(--accent); }
+.verdict.low { background: var(--ok-soft); color: var(--ok); }
+.verdict .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.scale { display: grid; gap: 4px; }
+.track { position: relative; height: 10px; background: var(--bar); border-radius: 5px; }
+.fill { position: absolute; inset: 0 auto 0 0; border-radius: 5px; background: var(--accent); }
+.thr { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink); }
+.scale .ticks { display: flex; justify-content: space-between; font-family: var(--font-data); font-size: 11px; color: var(--muted); }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th, td { text-align: left; padding: 7px 4px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 500; color: var(--muted); font-size: 12px; }
+td.num { font-family: var(--font-data); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.tag { font-size: 12px; font-weight: 600; }
+.tag.refer { color: var(--warn); }
+.tag.low { color: var(--ok); }
+.tag.high { color: var(--accent); }
+.tierkey { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 10px; font-size: 12.5px; color: var(--muted); }
+.tierkey .n { font-family: var(--font-data); text-align: right; font-variant-numeric: tabular-nums; }
+h2 { font-family: var(--font-display); font-weight: 600; font-size: 18px; margin: 0; }
+.drivers { display: grid; gap: 7px; }
+.drv { display: grid; grid-template-columns: 7.5em minmax(0, 1fr) 4.2em; gap: 8px; align-items: center; font-size: 13px; }
+.drv .bars { position: relative; height: 12px; }
+.drv .mid { position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--rule); }
+.drv .b { position: absolute; top: 0; bottom: 0; border-radius: 2px; }
+.drv .b.up { left: 50%; background: var(--accent); }
+.drv .b.down { right: 50%; background: var(--ok); }
+.drv .v { font-family: var(--font-data); font-size: 12px; text-align: right; color: var(--muted); }
+.note { font-size: 12.5px; color: var(--muted); }
+.fine { font-size: 12.5px; color: var(--muted); display: grid; gap: 6px; max-width: 80ch; }
+.fine strong { color: var(--ink); font-weight: 600; }
+.chip { font-family: var(--font-data); font-size: 11px; border: 1px solid var(--rule); border-radius: 4px; padding: 1px 6px; color: var(--muted); }
+@media (prefers-reduced-motion: no-preference) { .fill { transition: width .25s ease; } .drv .b { transition: width .25s ease; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Research model · not for clinical use</div>
+    <h1>Fibrosis Risk Calculator</h1>
+    <p class="lede">Estimates the probability that FibroScan liver stiffness would be at or above 8.0 kPa (significant fibrosis), 9.7 kPa (advanced) and 13.6 kPa (cirrhosis), from a routine visit, liver panel and blood count. A research demonstration of the fibrosis risk calculator (10 routine items) developed in our study; it is not a validated clinical tool.</p>
+  </header>
+
+  <div class="grid">
+    <form class="panel" id="form" novalidate>
+      <fieldset>
+        <legend>Patient</legend>
+        <div class="fields">
+          <div class="field">
+            <label for="age">Age</label>
+            <div class="inputrow"><input id="age" type="number" inputmode="decimal" min="18" max="90" step="1" value="55"><span class="unit">years</span></div>
+            <div class="err" id="err-age"></div>
+          </div>
+          <div class="field">
+            <label id="sex-label">Sex</label>
+            <div class="seg" role="group" aria-labelledby="sex-label">
+              <button type="button" id="sex-m" aria-pressed="true">Male</button>
+              <button type="button" id="sex-f" aria-pressed="false">Female</button>
+            </div>
+          </div>
+          <div class="field">
+            <label id="dm-label">Diabetes</label>
+            <div class="seg" role="group" aria-labelledby="dm-label">
+              <button type="button" id="dm-n" aria-pressed="false">No</button>
+              <button type="button" id="dm-y" aria-pressed="true">Yes</button>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Body measures</legend>
+        <div class="fields">
+          <div class="field">
+            <label for="wc">Waist circumference</label>
+            <div class="inputrow"><input id="wc" type="number" inputmode="decimal" min="50" max="180" step="0.1" value="105"><span class="unit">cm</span></div>
+            <div class="err" id="err-wc"></div>
+          </div>
+          <div class="field">
+            <label for="bmi">BMI</label>
+            <div class="inputrow"><input id="bmi" type="number" inputmode="decimal" min="14" max="70" step="0.1" value="32"><span class="unit">kg/m²</span></div>
+            <div class="err" id="err-bmi"></div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Liver panel</legend>
+        <div class="fields">
+          <div class="field">
+            <label for="ast">AST</label>
+            <div class="inputrow"><input id="ast" type="number" inputmode="decimal" min="3" max="1000" step="1" value="40"><span class="unit">U/L</span></div>
+            <div class="err" id="err-ast"></div>
+          </div>
+          <div class="field">
+            <label for="alt">ALT</label>
+            <div class="inputrow"><input id="alt" type="number" inputmode="decimal" min="3" max="1000" step="1" value="45"><span class="unit">U/L</span></div>
+            <div class="err" id="err-alt"></div>
+          </div>
+          <div class="field">
+            <label for="ggt">GGT</label>
+            <div class="inputrow"><input id="ggt" type="number" inputmode="decimal" min="3" max="2000" step="1" value="60"><span class="unit">U/L</span></div>
+            <div class="err" id="err-ggt"></div>
+          </div>
+          <div class="field">
+            <label for="alb">Albumin</label>
+            <div class="inputrow">
+              <input id="alb" type="number" inputmode="decimal" min="1.5" max="6" step="0.1" value="4.3">
+              <select id="albunit" class="unit" aria-label="Albumin unit">
+                <option value="gdl" selected>g/dL</option>
+                <option value="gl">g/L</option>
+              </select>
+            </div>
+            <div class="err" id="err-alb"></div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Blood count</legend>
+        <div class="fields">
+          <div class="field">
+            <label for="plt">Platelets</label>
+            <div class="inputrow"><input id="plt" type="number" inputmode="decimal" min="10" max="1000" step="1" value="200"><span class="unit">×10³/µL</span></div>
+            <div class="err" id="err-plt"></div>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="actions">
+        <button type="button" class="btn" id="ex-high">Example: higher-risk patient</button>
+        <button type="button" class="btn" id="ex-low">Example: lower-risk patient</button>
+      </div>
+      <p class="note">The form opens with an example patient. Replace the values with your own patient's.</p>
+    </form>
+
+    <section class="panel report" aria-live="polite">
+      <div class="headline">
+        <div class="k">Probability of liver stiffness ≥ 8.0 kPa</div>
+        <div class="risk" id="risk80">–</div>
+        <div class="verdict" id="verdict"><span class="dot"></span><span id="verdict-text">–</span></div>
+      </div>
+      <div class="scale" aria-hidden="true">
+        <div class="track"><div class="fill" id="fill"></div><div class="thr" id="thr"></div><div class="thr" id="thr2"></div></div>
+        <div class="ticks"><span>0%</span><span>10%</span><span>20%</span><span>30%</span><span>40%</span><span>50%+</span></div>
+      </div>
+      <p class="note" id="thr-note"></p>
+      <div class="tierkey">
+        <span class="tag low">Low</span><span>below 4.1%</span><span class="n"></span>
+        <span class="tag refer">Intermediate</span><span>4.1% to 9.9%</span><span class="n"></span>
+        <span class="tag high">High</span><span>10% or more</span><span class="n"></span>
+      </div>
+
+      <table>
+        <thead><tr><th>Stiffness threshold</th><th style="text-align:right">Probability</th><th>Cut-offs (low / high)</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>≥ 8.0 kPa · significant</td><td class="num" id="p80">–</td><td class="num">4.1% / 10%</td><td class="tag" id="t80"></td></tr>
+          <tr><td>≥ 9.7 kPa · advanced</td><td class="num" id="p97">–</td><td class="num">2.6% / 5%</td><td class="tag" id="t97"></td></tr>
+          <tr><td>≥ 13.6 kPa · cirrhosis</td><td class="num" id="p136">–</td><td class="num">1.0% / –</td><td class="tag" id="t136"></td></tr>
+          <tr><td>FIB-4, for comparison</td><td class="num" id="fib4">–</td><td class="num">1.30 / 2.67</td><td class="tag" id="tfib4"></td></tr>
+        </tbody>
+      </table>
+
+      <div class="drivers">
+        <h2>What moves this estimate</h2>
+        <p class="note">Effect of each item on the log-odds of stiffness ≥ 8.0 kPa, compared with a reference adult (45-year-old man, waist 98 cm, BMI 28.5, no diabetes, AST 20, ALT 20, GGT 22, platelets 240, albumin 4.2). Red raises risk, green lowers it.</p>
+        <div id="drivers"></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="fine">
+    <p><strong>About.</strong> A logistic regression model using 10 routine clinical and laboratory items, developed from US national survey data. Full methods and performance will be reported in the forthcoming publication.</p>
+    <p><strong>Limits.</strong> For research and education only; not a substitute for clinical judgement or elastography. Derived from US adults; performance elsewhere is unknown. The model predicts FibroScan stiffness, which can read high in obesity, after meals and with active hepatitis.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  // Model coefficients. Order of terms:
+  // const, age, female, waist, BMI, diabetes, ln AST, ln ALT, ln GGT, ln platelets, albumin (g/dL)
+  var MODELS = {
+    p80:  { thr: 0.0409, hi: 0.10, b: [-6.32133, 0.01148, -0.21927, 0.02680, 0.06791, 0.80971, 1.14948, -0.19700, 0.63303, -0.91973, -0.45919] },
+    p97:  { thr: 0.0259, hi: 0.05, b: [-8.78064, 0.02362,  0.01971, 0.03821, 0.05746, 0.74392, 1.50598, -0.48546, 0.70548, -1.06703, -0.37769] },
+    p136: { thr: 0.0099, b: [-2.43609, 0.01558, -0.38373, 0.03490, 0.05302, 1.08050, 2.09214, -1.11170, 0.58597, -1.61690, -1.12924] }
+  };
+  var REF = { age: 45, female: 0, wc: 98, bmi: 28.5, dm: 0, ast: 20, alt: 20, ggt: 22, plt: 240, alb: 4.2 };
+  var LIMITS = {
+    age: [18, 90, "Enter an age between 18 and 90."],
+    wc:  [50, 180, "Enter a waist between 50 and 180 cm."],
+    bmi: [14, 70, "Enter a BMI between 14 and 70."],
+    ast: [3, 1000, "Enter AST between 3 and 1000 U/L."],
+    alt: [3, 1000, "Enter ALT between 3 and 1000 U/L."],
+    ggt: [3, 2000, "Enter GGT between 3 and 2000 U/L."],
+    plt: [10, 1000, "Enter platelets between 10 and 1000 ×10³/µL."]
+  };
+  var state = { female: 0, dm: 1 };
+  var $ = function (id) { return document.getElementById(id); };
+
+  function seg(onId, offId, key, val) {
+    $(onId).addEventListener("click", function () {
+      state[key] = val;
+      $(onId).setAttribute("aria-pressed", "true");
+      $(offId).setAttribute("aria-pressed", "false");
+      update();
+    });
+  }
+  seg("sex-m", "sex-f", "female", 0); seg("sex-f", "sex-m", "female", 1);
+  seg("dm-n", "dm-y", "dm", 0);       seg("dm-y", "dm-n", "dm", 1);
+
+  function read() {
+    var x = { female: state.female, dm: state.dm }, ok = true;
+    Object.keys(LIMITS).forEach(function (k) {
+      var v = parseFloat($(k).value), L = LIMITS[k];
+      var bad = !isFinite(v) || v < L[0] || v > L[1];
+      $("err-" + k).textContent = bad ? L[2] : "";
+      if (bad) ok = false; else x[k] = v;
+    });
+    var a = parseFloat($("alb").value), gl = $("albunit").value === "gl";
+    var g = gl ? a / 10 : a;
+    var badA = !isFinite(g) || g < 1.5 || g > 6;
+    $("err-alb").textContent = badA ? (gl ? "Enter albumin between 15 and 60 g/L." : "Enter albumin between 1.5 and 6 g/dL.") : "";
+    if (badA) ok = false; else x.alb = g;
+    return ok ? x : null;
+  }
+  function terms(x) {
+    return [1, x.age, x.female, x.wc, x.bmi, x.dm, Math.log(x.ast), Math.log(x.alt), Math.log(x.ggt), Math.log(x.plt), x.alb];
+  }
+  function prob(m, x) {
+    var t = terms(x), l = 0;
+    for (var i = 0; i < t.length; i++) l += m.b[i] * t[i];
+    return 1 / (1 + Math.exp(-l));
+  }
+  function pct(p) { return p < 0.001 ? "<0.1%" : (100 * p).toFixed(p < 0.1 ? 1 : 0) + "%"; }
+
+  var NAMES = ["Age", "Female sex", "Waist", "BMI", "Diabetes", "AST", "ALT", "GGT", "Platelets", "Albumin"];
+  function drivers(x) {
+    var b = MODELS.p80.b, tx = terms(x), tr = terms(REF), rows = [];
+    for (var i = 1; i < tx.length; i++) rows.push({ n: NAMES[i - 1], d: b[i] * (tx[i] - tr[i]) });
+    rows.sort(function (a, c) { return Math.abs(c.d) - Math.abs(a.d); });
+    var max = Math.max(1, Math.abs(rows[0].d));
+    $("drivers").innerHTML = rows.map(function (r) {
+      var w = Math.min(50, 50 * Math.abs(r.d) / max);
+      var cls = r.d >= 0 ? "up" : "down";
+      return '<div class="drv"><span>' + r.n + '</span><span class="bars"><span class="mid"></span>' +
+        '<span class="b ' + cls + '" style="width:' + w.toFixed(1) + '%"></span></span>' +
+        '<span class="v">' + (r.d >= 0 ? "+" : "−") + Math.abs(r.d).toFixed(2) + '</span></div>';
+    }).join("");
+  }
+
+  // Tier: 1 low (< rule-out), 2 intermediate, 3 high (>= rule-in, where defined)
+  function tier(m, p) { return p < m.thr ? 1 : (m.hi && p >= m.hi ? 3 : 2); }
+  var TIERTXT = ["", "Low", "Intermediate", "High"], TIERCLS = ["", "low", "refer", "high"];
+  function tag(id, m, p) {
+    var el = $(id), k = tier(m, p);
+    el.textContent = m.hi ? TIERTXT[k] : (k === 1 ? "Below" : "Above");
+    el.className = "tag " + TIERCLS[k];
+  }
+
+  function update() {
+    var x = read();
+    if (!x) { ["risk80", "p80", "p97", "p136", "fib4"].forEach(function (k) { $(k).textContent = "–"; });
+      $("verdict-text").textContent = "Check the highlighted values"; $("verdict").className = "verdict"; return; }
+    var p80 = prob(MODELS.p80, x), p97 = prob(MODELS.p97, x), p136 = prob(MODELS.p136, x);
+    $("risk80").textContent = pct(p80);
+    var k = tier(MODELS.p80, p80);
+    $("verdict").className = "verdict " + TIERCLS[k];
+    $("verdict-text").textContent = [ "",
+      "Low risk: significant fibrosis unlikely",
+      "Intermediate risk: elastography if capacity allows, otherwise repeat in 1–2 years",
+      "High risk: elastography recommended" ][k];
+    $("fill").style.width = Math.min(100, p80 / 0.5 * 100).toFixed(1) + "%";
+    $("thr").style.left = (MODELS.p80.thr / 0.5 * 100).toFixed(2) + "%";
+    $("thr2").style.left = (MODELS.p80.hi / 0.5 * 100).toFixed(2) + "%";
+    $("thr-note").textContent = "Black marks: the 4.1% and 10% cut-offs between the low, intermediate and high bands.";
+    $("p80").textContent = pct(p80); $("p97").textContent = pct(p97); $("p136").textContent = pct(p136);
+    tag("t80", MODELS.p80, p80); tag("t97", MODELS.p97, p97); tag("t136", MODELS.p136, p136);
+    var f4 = x.age * x.ast / (x.plt * Math.sqrt(x.alt));
+    $("fib4").textContent = f4.toFixed(2);
+    var tf = $("tfib4");
+    if (f4 < 1.3) { tf.textContent = "Low"; tf.className = "tag low"; }
+    else if (f4 > 2.67) { tf.textContent = "High"; tf.className = "tag refer"; }
+    else { tf.textContent = "Indeterminate"; tf.className = "tag"; }
+    drivers(x);
+  }
+
+  function setVals(v) {
+    Object.keys(v.vals).forEach(function (k) { $(k).value = v.vals[k]; });
+    $("albunit").value = "gdl";
+    $(v.female ? "sex-f" : "sex-m").click();
+    $(v.dm ? "dm-y" : "dm-n").click();
+    update();
+  }
+  $("ex-high").addEventListener("click", function () {
+    setVals({ female: 0, dm: 1, vals: { age: 55, wc: 105, bmi: 32, ast: 40, alt: 45, ggt: 60, plt: 200, alb: 4.3 } });
+  });
+  $("ex-low").addEventListener("click", function () {
+    setVals({ female: 1, dm: 0, vals: { age: 40, wc: 82, bmi: 24, ast: 20, alt: 18, ggt: 18, plt: 280, alb: 4.5 } });
+  });
+  $("albunit").addEventListener("change", function () {
+    var a = parseFloat($("alb").value);
+    if (isFinite(a)) $("alb").value = this.value === "gl" ? Math.round(a * 10) : (a / 10).toFixed(1);
+    update();
+  });
+  $("form").addEventListener("input", update);
+  $("form").addEventListener("submit", function (e) { e.preventDefault(); });
+  update();
+})();
+</script>
+
+</html>
